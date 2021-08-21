@@ -1,32 +1,19 @@
-import "reflect-metadata";
-import { ApolloServer } from "apollo-server-express";
-import * as Express from "express";
-import { buildSchema, Resolver, Query } from "type-graphql";
-
-@Resolver()
-class HelloResolver {
-  @Query(() => String)
-  async helloWorld() {
-    return "Hello World!";
-  }
-}
+import { MikroORM } from '@mikro-orm/core'
+import { __prod__ } from './entities/constants'
+import { Post } from './entities/Post'
+import mikroOrmConfig from './mikro-orm.config'
 
 const main = async () => {
-  const schema = await buildSchema({
-    resolvers: [HelloResolver]
-  });
+  const orm = await MikroORM.init(
+    mikroOrmConfig
+  )
+  const migrator = orm.getMigrator()
+  migrator.up()
+  const post = orm.em.create(Post, { title: 'This is a test post' })
+  await orm.em.persistAndFlush(post)
+  // const allPosts = await orm.em.find(Post, {})
+  // console.log(allPosts)
 
-  const apolloServer = new ApolloServer({ schema });
+}
 
-  const app = Express();
-
-  apolloServer.applyMiddleware({ app });
-
-  app.get('/', (_, res) => res.send('Hello From server'))
-
-  app.listen(4000, () => {
-    console.log("Server started on http://localhost:4000/graphql");
-  });
-};
-
-main();
+main().catch(err => console.log(err));
