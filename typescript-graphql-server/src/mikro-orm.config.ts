@@ -1,5 +1,5 @@
 import { Post } from "./entities/Post";
-import { __prod__ } from "./entities/constants";
+import { __prod__ } from "./constants";
 import { MikroORM } from "@mikro-orm/core";
 import * as path from 'path'
 
