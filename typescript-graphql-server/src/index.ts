@@ -1,17 +1,18 @@
+import 'reflect-metadata'
 import { MikroORM } from '@mikro-orm/core'
-import { __prod__ } from './entities/constants'
+import { PORT, __prod__ } from './constants'
 import mikroOrmConfig from './mikro-orm.config'
 import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
 import { HelloResolver } from './resolvers/hello';
+import { PostResolver } from './resolvers/post';
 
 const main = async () => {
   const orm = await MikroORM.init(
     mikroOrmConfig
   )
-  const migrator = orm.getMigrator()
-  migrator.up()
+  await orm.getMigrator().up();
 
   // Express server
   const app = express()
@@ -19,9 +20,10 @@ const main = async () => {
   // Apollo Server init
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver],
-      validate: false
-    })
+      resolvers: [HelloResolver, PostResolver],
+      validate: false,
+    }),
+    context: () => ({ em: orm.em }),
   })
 
   // Adding express server in apollo
@@ -30,7 +32,7 @@ const main = async () => {
   // REST endpoint
   app.get('/', (_, res) => res.send('Hello from express server'))
 
-  app.listen(4000, () => console.log('Express server started on PORT 4000'))
+  app.listen(PORT, () => console.log(`Express server started on PORT ${PORT}`))
 
 }
 
